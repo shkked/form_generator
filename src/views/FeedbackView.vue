@@ -1,8 +1,8 @@
 <template>
   <div>
     <FormGenerator
-      class="helloForm"
-      :config="configHelloForm"
+      class="feedbackForm"
+      :config="configFeedbackForm"
       v-model="formData"
       @submit="saveForm"
       @cancel="cancelForm"
@@ -18,9 +18,9 @@ import { useStore } from 'vuex'
 const store = useStore()
 
 const formData = computed({
-  get: () => store.getters.getValueForm('helloForm'),
+  get: () => store.getters.getValueForm('feedbackForm'),
   set: (value: unknown) => {
-    store.commit('setValueForm', { id: 'helloForm', value })
+    store.commit('setValueForm', { id: 'feedbackForm', value })
   },
 })
 
@@ -30,14 +30,17 @@ const saveForm = (value: unknown) => {
 }
 
 const cancelForm = () => {
-  store.commit('resetValueForm', 'helloForm')
+  store.commit('resetValueForm', 'feedbackForm')
 }
 
-const configHelloForm = computed(() => store.getters.getConfigForm('configHelloForm'))
+const configFeedbackForm = computed(() => store.getters.getConfigForm('configFeedbackForm'))
 </script>
 
-<style scoped>
-.helloForm {
+<style lang="scss" scoped>
+.feedbackForm {
   margin: 50px auto;
+  .form-generator__label-isPickup {
+    margin-top: 15px;
+  }
 }
 </style>

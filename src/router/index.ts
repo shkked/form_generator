@@ -8,6 +8,16 @@ const router = createRouter({
       name: 'home',
       component: () => import('../views/HomeView.vue'),
     },
+    {
+      path: '/order',
+      name: 'order',
+      component: () => import('../views/OrderView.vue'),
+    },
+    {
+      path: '/feedback',
+      name: 'feedback',
+      component: () => import('../views/FeedbackView.vue'),
+    },
   ],
 })
 

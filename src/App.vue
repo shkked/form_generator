@@ -1,10 +1,13 @@
 <template>
   <div>
+    <HeaderLayout />
     <router-view />
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import HeaderLayout from '@/components/HeaderLayout.vue'
+</script>
 
 <style lang="scss" scoped>
 * {
@@ -14,13 +17,7 @@
 }
 
 #app {
-  font-family: 'Inter', sans-serif;
-  line-height: 1.6;
-  color: #333;
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-}
-h1 {
-  text-align: center;
 }
 </style>
