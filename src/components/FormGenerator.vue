@@ -11,30 +11,81 @@
           :update="(v: unknown) => update(field.key, v)"
         >
           <label class="form-generator__label" :for="field.key">{{ field.label }}</label>
+          <!-- Select с множественным выбором -->
+          <div v-if="field.type == 'select' && field?.attrs?.multiple" class="multiselect">
+            <div class="multiselect__selected" @click="field._open = !field._open">
+              <span v-if="(modelValue[field.key] as string[]).length">
+                {{ (modelValue[field.key] as string[]).join(', ') }}
+              </span>
+              <span v-else class="placeholder">{{ field.attrs?.placeholder }}</span>
+              <i class="bi bi-chevron-down"></i>
+            </div>
 
-          <component
-            v-if="field.type == 'select' && field?.attrs?.multiple"
-            class="form-generator__block"
-            :is="field.type"
-            v-bind="field.attrs"
-            :id="field.key"
-            @change="onChange($event, field)"
-          >
-            <template v-if="field.type === 'select'">
-              <option
+            <div v-if="field._open" class="multiselect__dropdown">
+              <div
                 v-for="option in field.options"
                 :key="option"
-                :value="option"
-                :selected="
-                  field?.attrs?.multiple
-                    ? ((modelValue[field.key] as string[]) || []).includes(option)
-                    : modelValue[field.key] === option
+                class="multiselect__option"
+                @click.stop="
+                  (() => {
+                    const arr = [...((modelValue[field.key] as string[]) || [])]
+                    const i = arr.indexOf(option)
+                    if (i >= 0) arr.splice(i, 1)
+                    else arr.push(option)
+                    update(field.key, arr)
+                  })()
                 "
               >
-                {{ option }}
-              </option>
-            </template>
-          </component>
+                <i
+                  class="bi"
+                  :class="
+                    ((modelValue[field.key] as string[]) || []).includes(option)
+                      ? 'bi-check-square'
+                      : 'bi-square'
+                  "
+                ></i>
+                <span>{{ option }}</span>
+              </div>
+            </div>
+          </div>
+          <!-- Select с одиночным выбором -->
+          <div v-else-if="field.type == 'select'" class="multiselect">
+            <div class="multiselect__selected" @click="field._open = !field._open">
+              <span v-if="modelValue[field.key]">
+                {{ modelValue[field.key] }}
+              </span>
+              <span v-else class="placeholder">{{ field.attrs?.placeholder }}</span>
+              <i class="bi bi-chevron-down"></i>
+            </div>
+
+            <div v-if="field._open" class="multiselect__dropdown">
+              <div
+                v-for="option in field.options"
+                :key="option"
+                class="multiselect__option"
+                @click.stop="
+                  (() => {
+                    let val = modelValue[field.key]
+                    if (val === option) {
+                      val = ''
+                    } else {
+                      val = option
+                    }
+                    update(field.key, val)
+                  })()
+                "
+              >
+                <i
+                  class="bi"
+                  :class="
+                    (modelValue[field.key] as string) === option ? 'bi-check-square' : 'bi-square'
+                  "
+                ></i>
+                <span>{{ option }}</span>
+              </div>
+            </div>
+          </div>
+          <!-- Input, Textarea, Checkbox -->
           <component
             v-else
             class="form-generator__block"
@@ -42,25 +93,10 @@
             v-bind="field.attrs"
             :multiple="field?.attrs?.multiple"
             :id="field.key"
-            :value="modelValue[field.key]"
+            :value="modelValue[field.key] ?? ''"
             @input="update(field.key, $event.target.value)"
             @change="onChange($event, field)"
-          >
-            <template v-if="field.type === 'select'">
-              <option
-                v-for="option in field.options"
-                :key="option"
-                :value="option"
-                :selected="
-                  field?.attrs?.multiple
-                    ? ((modelValue[field.key] as string[]) || []).includes(option)
-                    : modelValue[field.key] === option
-                "
-              >
-                {{ option }}
-              </option>
-            </template>
-          </component>
+          />
         </slot>
       </div>
 
@@ -84,6 +120,7 @@
 
 <script setup lang="ts">
 import type { IField, IFormConfig } from '@/types/form.types.ts'
+import { onBeforeUnmount, onMounted } from 'vue'
 
 interface IPropsForm {
   config: IFormConfig
@@ -109,6 +146,23 @@ const onChange = (event: Event, field: IField) => {
     update(field.key, (target as HTMLInputElement).value)
   }
 }
+
+const closeAllMultiselects = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  if (!target.closest('.multiselect')) {
+    props.config.fields.forEach((field: IField) => {
+      if (field._open) field._open = false
+    })
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', closeAllMultiselects)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', closeAllMultiselects)
+})
 </script>
 
 <style lang="scss" scoped>
@@ -121,6 +175,7 @@ const onChange = (event: Event, field: IField) => {
   flex-direction: column;
   width: 300px;
   margin: 0 auto;
+
   .form-generator__title {
     font-family: 'NeueMontreal Bold', sans-serif;
   }
@@ -175,6 +230,51 @@ const onChange = (event: Event, field: IField) => {
     &:hover {
       background-color: #1249a7;
     }
+  }
+  .multiselect {
+    position: relative;
+    background-color: white;
+    width: 100%;
+    margin-top: 5px;
+  }
+
+  .multiselect__selected {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #ffffff;
+  }
+
+  .multiselect__dropdown {
+    position: absolute;
+    z-index: 10;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    width: 100%;
+    margin-top: 4px;
+    max-height: 100px;
+    overflow-y: auto;
+  }
+
+  .multiselect__option {
+    padding: 6px 8px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .multiselect__option:hover {
+    background: #f0f0f0;
+  }
+
+  .placeholder {
+    color: #757575;
   }
 }
 </style>

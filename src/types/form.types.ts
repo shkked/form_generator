@@ -10,6 +10,7 @@ export interface IField {
   options?: string[]
   style?: CSSProperties
   attrs?: Record<string, unknown>
+  _open?: boolean
 }
 export interface IFormConfig {
   title: string
